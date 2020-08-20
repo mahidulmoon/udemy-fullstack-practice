@@ -1,0 +1,11 @@
+<html>
+    <body>
+        <h1>hello</h1>
+        {% for book in books %}
+            <p> {{book.title}} </p>
+            {% if book.is_published %}
+                <p>it is published</p>
+            {% endif  %}
+        {%  endfor %}
+    </body>
+</html>
