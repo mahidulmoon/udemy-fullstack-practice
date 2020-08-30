@@ -1,7 +1,11 @@
 import React,{Component} from 'react';
-import MovieList from './components/movie-list'
+import MovieList from './components/movie-list';
 import './App.css';
 import MovieDetails from './components/movie-details';
+import MovieForm from './components/movie-form';
+import { withCookies } from 'react-cookie';
+var FontAwesome = require('react-fontawesome');
+
 // function App() {
 //   const movies = ['titanic','avatar'];
 //   return (
@@ -15,31 +19,63 @@ import MovieDetails from './components/movie-details';
 class App extends Component{
   state={
     movies:[],
-    selectedMovie: null
+    selectedMovie: null,
+    editedMovie: null,
+    token: this.props.cookies.get('mr-token')
   }
-  movieClicked=movie=>{
-    this.setState({selectedMovie:movie});
+  
+  loadMovie = movie =>{
+    this.setState({selectedMovie:movie,editedMovie:null})
+  }
+
+  editClicked = selMovie => {
+    this.setState({editedMovie:selMovie});
   }
   //movies = ['titanic','avatar'];
   componentDidMount(){
-    fetch('http://127.0.0.1:8000/api/movies/',{
+    if(this.state.token){
+      fetch('http://127.0.0.1:8000/api/movies/',{
       method:'GET',headers:{
-        'Authorization': 'Token a383f177880f8c2330b8b77fa8e81eadf87f3143'
+        'Authorization': `Token ${this.state.token}`
       }
     }).then(res=>res.json()).then(res=>this.setState({movies:res})).catch(err=>console.log('error'));
+  
+    }else{
+      window.location.href='/';
+    }
+    }
+  movieDeleted = selMovie =>{
+    const movies = this. state.movies.filter(movie => movie.id !== selMovie.id)
+    this.setState({movies: movies,selectedMovie:null })
   }
+  newMovie = () =>{
+    this.setState({editedMovie: {title: '',description:''}});
+  }
+  cancelForm = () =>{
+    this.setState({editedMovie: null})
+  }
+  addMovie = (movie)=>{
+    this.setState({movies: [...this.state.movies,movie]});
+  }
+
   render(){
-    return(
+        return(
       <div className="App">
-        <h1>Movie rater</h1>
+        <h1><FontAwesome name="film" /><span>Movie rater</span></h1>
         <div className="layout">
 
-        <MovieList movies={this.state.movies} movieClicked={this.movieClicked}/>
-        <MovieDetails movie={this.state.selectedMovie}/>
+        <MovieList movies={this.state.movies} movieClicked={this.loadMovie} movieDeleted={this.movieDeleted} editClicked={this.editClicked} newMovie={this.newMovie} token={this.state.token} />
+        <div>
+          {!this.state.editedMovie ?
+          <MovieDetails movie={this.state.selectedMovie} updateMovie={this.loadMovie} token={this.state.token}/>
+          : <MovieForm movie={this.state.editedMovie} cancelForm={this.cancelForm} token={this.state.token} newMovie={this.addMovie} editedMovie={this.loadMovie} />
+        }
+          
+        </div>
         </div>
       </div>
     )
   }
 }
 
-export default App;
+export default withCookies(App);
